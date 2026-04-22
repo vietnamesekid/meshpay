@@ -1,5 +1,11 @@
 # @meshpay/cli
 
+## 0.3.1
+
+### Patch Changes
+
+- fad2453: Fix version display: read from package.json instead of hardcoded string
+
 ## 0.3.0
 
 ### Minor Changes
