@@ -1,5 +1,15 @@
 # @meshpay/cli
 
+## 0.4.0
+
+### Minor Changes
+
+- 23b8ae3: `wallet status` now shows live USDC balance fetched on-chain. Chain defaults to `eip155:8453` (Base), override with `MESHPAY_CHAIN_ID` env var.
+
+### Patch Changes
+
+- 981d954: `wallet status` now resolves private key with priority: `--key` flag > `AGENT_PRIVATE_KEY` env > ephemeral
+
 ## 0.3.1
 
 ### Patch Changes

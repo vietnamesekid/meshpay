@@ -1,9 +1,9 @@
 /**
  * Polygon Amoy facilitator — calls USDC transferWithAuthorization on-chain.
  *
- * Replaces the CDP facilitator for testnet use. Submits EIP-3009 signed
- * authorizations directly to the USDC contract on Polygon Amoy via viem,
- * then returns a real txHash that the resource server verifies on-chain.
+ * The agent wallet SIGNS the EIP-3009 authorization; a separate FACILITATOR
+ * wallet (FACILITATOR_PRIVATE_KEY) pays the gas. This means you only need to
+ * fund the facilitator wallet with POL — the agent wallet never needs gas money.
  *
  * EIP-3009: https://eips.ethereum.org/EIPS/eip-3009
  */
@@ -13,9 +13,10 @@ import type { X402Authorization, X402PaymentRequired } from '@meshpay/protocols'
 import {
   createPublicClient,
   createWalletClient,
+  formatEther,
   http,
 } from 'viem'
-import { privateKeyToAccount } from 'viem/accounts'
+import { generatePrivateKey, privateKeyToAccount } from 'viem/accounts'
 import { polygonAmoy } from 'viem/chains'
 import { USDC_AMOY, MERCHANT_ADDRESS } from './amoy-x402-server.js'
 
@@ -52,17 +53,23 @@ export class AmoyFacilitator implements Facilitator {
 
   private readonly publicClient
   private readonly walletClient
+  readonly submitterAddress: string
 
-  constructor(privateKey: `0x${string}`) {
-    const account = privateKeyToAccount(privateKey)
+  /**
+   * @param gasPayerKey - Private key of the wallet that pays POL gas fees.
+   *   This is SEPARATE from the agent signing key — the agent signs the EIP-3009
+   *   authorization, but this wallet submits the tx on-chain. Only this wallet
+   *   needs POL. Falls back to AGENT_PRIVATE_KEY if not set.
+   */
+  constructor(gasPayerKey: `0x${string}`) {
+    const account = privateKeyToAccount(gasPayerKey)
+    this.submitterAddress = account.address
 
     this.publicClient = createPublicClient({
       chain: polygonAmoy,
       transport: http(),
     })
 
-    // The submitter wallet pays gas for transferWithAuthorization.
-    // In production this would be the CDP facilitator; here it's our own wallet.
     this.walletClient = createWalletClient({
       account,
       chain: polygonAmoy,
@@ -124,7 +131,17 @@ export class AmoyFacilitator implements Facilitator {
     console.log(`  to        : ${auth.to}`)
     console.log(`  value     : ${Number(auth.value) / 1e6} USDC`)
     console.log(`  nonce     : ${auth.nonce}`)
+    console.log(`  submitter : ${this.submitterAddress} (pays gas)`)
     console.log(`  sig v/r/s : ${signature.v} / ${signature.r.slice(0, 10)}… / ${signature.s.slice(0, 10)}…`)
+
+    // Pre-flight: ensure gas payer has enough POL
+    const polBalance = await this.publicClient.getBalance({ address: this.submitterAddress as `0x${string}` })
+    if (polBalance < 5_000_000_000_000_000n) { // 0.005 POL minimum
+      throw new Error(
+        `Insufficient gas: facilitator ${this.submitterAddress} has only ${formatEther(polBalance)} POL. ` +
+        `Fund it at https://faucet.polygon.technology/ — it only needs POL, not USDC.`,
+      )
+    }
 
     // bytes32 nonce padding
     const nonceHex = auth.nonce.startsWith('0x') ? auth.nonce.slice(2) : auth.nonce
@@ -178,6 +195,15 @@ export class AmoyFacilitator implements Facilitator {
     })
     return `${Number(balance) / 1e6} USDC`
   }
+}
+
+/** Resolve the gas payer key: FACILITATOR_PRIVATE_KEY → AGENT_PRIVATE_KEY → fresh ephemeral */
+export function resolveGasPayerKey(): `0x${string}` {
+  return (
+    (process.env['FACILITATOR_PRIVATE_KEY'] as `0x${string}` | undefined) ??
+    (process.env['AGENT_PRIVATE_KEY'] as `0x${string}` | undefined) ??
+    generatePrivateKey()
+  )
 }
 
 export { MERCHANT_ADDRESS, USDC_AMOY }

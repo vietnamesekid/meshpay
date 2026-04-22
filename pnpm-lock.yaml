@@ -146,9 +146,15 @@ importers:
       '@meshpay/wallet':
         specifier: workspace:*
         version: link:../wallet
+      dotenv:
+        specifier: ^16.6.1
+        version: 16.6.1
       picocolors:
         specifier: ^1.1.1
         version: 1.1.1
+      viem:
+        specifier: ^2.48.4
+        version: 2.48.4(typescript@5.9.3)(zod@3.25.76)
     devDependencies:
       '@meshpay/tsconfig':
         specifier: workspace:^

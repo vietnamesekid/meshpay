@@ -26,9 +26,9 @@ import { polygonAmoy } from 'viem/chains'
 
 // ─── Config ───────────────────────────────────────────────────────────────────
 
-const PRIVATE_KEY = process.env['WALLET_PRIVATE_KEY'] as `0x${string}` | undefined
+const PRIVATE_KEY = process.env['AGENT_PRIVATE_KEY'] as `0x${string}` | undefined
 if (!PRIVATE_KEY) {
-  console.error('WALLET_PRIVATE_KEY not set in .env')
+  console.error('AGENT_PRIVATE_KEY not set in .env')
   process.exit(1)
 }
 
