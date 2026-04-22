@@ -16,8 +16,8 @@ import {
   http,
 } from 'viem'
 import { generatePrivateKey, privateKeyToAccount } from 'viem/accounts'
-import { base, polygon, arbitrum, polygonAmoy } from 'viem/chains'
 import type { X402Authorization } from '@meshpay/protocols'
+import { viemChain, USDC_ADDRESS } from './chain-info.js'
 
 export interface SessionWalletOptions {
   /** Hex private key — if omitted, a new ephemeral key is generated */
@@ -42,40 +42,12 @@ const EIP3009_TYPES = {
   ],
 } as const
 
-// USDC contract addresses and their EIP-712 domain parameters per chain
-const USDC_DOMAIN: Record<string, { name: string; version: string; address: `0x${string}`; chainNumericId: number }> = {
-  'eip155:8453': {
-    name: 'USD Coin',
-    version: '2',
-    address: '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913',
-    chainNumericId: 8453,
-  },
-  'eip155:137': {
-    name: 'USD Coin',
-    version: '2',
-    address: '0x3c499c542cEF5E3811e1192ce70d8cC03d5c3359',
-    chainNumericId: 137,
-  },
-  'eip155:42161': {
-    name: 'USD Coin',
-    version: '2',
-    address: '0xaf88d065e77c8cC2239327C5EDb3A432268e5831',
-    chainNumericId: 42161,
-  },
-  'eip155:80002': {
-    name: 'USDC',
-    version: '2',
-    address: '0x41E94Eb019C0762f9Bfcf9Fb1E58725BfB0e7582',
-    chainNumericId: 80002,
-  },
-}
-
-function chainFromCaip2(chainId: string) {
-  if (chainId === 'eip155:137') return polygon
-  if (chainId === 'eip155:42161') return arbitrum
-  if (chainId === 'eip155:80002') return polygonAmoy
-
-  return base // default: eip155:8453
+// EIP-712 domain name/version per chain (Circle uses different names on different networks)
+const USDC_DOMAIN_META: Record<string, { name: string; version: string; chainNumericId: number }> = {
+  'eip155:8453':  { name: 'USD Coin', version: '2', chainNumericId: 8453 },
+  'eip155:137':   { name: 'USD Coin', version: '2', chainNumericId: 137 },
+  'eip155:42161': { name: 'USD Coin', version: '2', chainNumericId: 42161 },
+  'eip155:80002': { name: 'USDC',     version: '2', chainNumericId: 80002 },
 }
 
 // bytes32 nonce: left-pad hex string or use as-is if already 32 bytes
@@ -113,7 +85,7 @@ export class SessionWallet implements AgentWallet {
 
     this.client = createWalletClient({
       account,
-      chain: chainFromCaip2(chainId),
+      chain: viemChain(chainId),
       transport: http(),
     })
   }
@@ -149,18 +121,18 @@ export class SessionWallet implements AgentWallet {
     // Stamp the payer address so submit() can include it in the authorization payload
     auth.from = this.address
 
-    const domainParams = USDC_DOMAIN[this.chainId]
+    const domainMeta = USDC_DOMAIN_META[this.chainId]
+    const usdcAddress = USDC_ADDRESS[this.chainId]
 
-    if (!domainParams) {
+    if (!domainMeta || !usdcAddress) {
       throw new Error(`Unsupported chain for EIP-3009 signing: ${this.chainId}`)
     }
 
-    // EIP-712 domain — must match what USDC contract's DOMAIN_SEPARATOR expects
     const domain = {
-      name: domainParams.name,
-      version: domainParams.version,
-      chainId: domainParams.chainNumericId,
-      verifyingContract: domainParams.address,
+      name: domainMeta.name,
+      version: domainMeta.version,
+      chainId: domainMeta.chainNumericId,
+      verifyingContract: usdcAddress,
     } as const
 
     const message = {

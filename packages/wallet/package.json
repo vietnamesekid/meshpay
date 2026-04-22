@@ -1,6 +1,6 @@
 {
   "name": "@meshpay/wallet",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "Non-custodial wallet session manager",
   "type": "module",
   "main": "./dist/index.js",

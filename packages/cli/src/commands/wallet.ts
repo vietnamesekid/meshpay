@@ -1,24 +1,7 @@
 import pc from 'picocolors'
-import { createSessionWallet } from '@meshpay/wallet'
-import { createPublicClient, http, formatUnits } from 'viem'
-import { base, polygon, arbitrum, polygonAmoy } from 'viem/chains'
+import { createSessionWallet, CHAIN_NAME, NATIVE_SYMBOL, USDC_ADDRESS, viemChain } from '@meshpay/wallet'
+import { createPublicClient, http, formatUnits, formatEther } from 'viem'
 import type { ChainId } from '@meshpay/core'
-
-const USDC: Record<ChainId, `0x${string}`> = {
-  'eip155:8453':    '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913',
-  'eip155:137':     '0x3c499c542cEF5E3811e1192ce70d8cC03d5c3359',
-  'eip155:42161':   '0xaf88d065e77c8cC2239327C5EDb3A432268e5831',
-  'eip155:80002':   '0x41E94Eb019C0762f9Bfcf9Fb1E58725BfB0e7582',
-  'solana:mainnet': '0x0000000000000000000000000000000000000000',
-}
-
-const CHAIN_NAME: Record<ChainId, string> = {
-  'eip155:8453':    'Base',
-  'eip155:137':     'Polygon',
-  'eip155:42161':   'Arbitrum',
-  'eip155:80002':   'Polygon Amoy (testnet)',
-  'solana:mainnet': 'Solana',
-}
 
 function formatExpiry(expiresAt: Date): string {
   const mins = Math.round((expiresAt.getTime() - Date.now()) / 60_000)
@@ -37,24 +20,29 @@ const BALANCE_OF_ABI = [{
   outputs: [{ name: '', type: 'uint256' }],
 }] as const
 
-function viemChain(chainId: ChainId) {
-  if (chainId === 'eip155:137') return polygon
-  if (chainId === 'eip155:42161') return arbitrum
-  if (chainId === 'eip155:80002') return polygonAmoy
-  return base
-}
-
 async function fetchUsdcBalance(address: `0x${string}`, chainId: ChainId): Promise<number | null> {
-  if (chainId === 'solana:mainnet') return null
+  const usdcAddr = USDC_ADDRESS[chainId]
+  if (!usdcAddr) return null
   try {
     const client = createPublicClient({ chain: viemChain(chainId), transport: http() })
     const raw = await client.readContract({
-      address: USDC[chainId],
+      address: usdcAddr,
       abi: BALANCE_OF_ABI,
       functionName: 'balanceOf',
       args: [address],
     })
     return Number(formatUnits(raw, 6))
+  } catch {
+    return null
+  }
+}
+
+async function fetchNativeBalance(address: `0x${string}`, chainId: ChainId): Promise<number | null> {
+  if (chainId === 'solana:mainnet') return null
+  try {
+    const client = createPublicClient({ chain: viemChain(chainId), transport: http() })
+    const raw = await client.getBalance({ address })
+    return Number(formatEther(raw))
   } catch {
     return null
   }
@@ -74,7 +62,11 @@ export async function runWalletStatus(privateKeyFlag?: string): Promise<void> {
     },
   })
 
-  const balance = await fetchUsdcBalance(wallet.address as `0x${string}`, chainId)
+  const addr = wallet.address as `0x${string}`
+  const [balance, nativeBalance] = await Promise.all([
+    fetchUsdcBalance(addr, chainId),
+    fetchNativeBalance(addr, chainId),
+  ])
   const { spentToday, txCount } = wallet.state
 
   const COL = 18
@@ -82,14 +74,19 @@ export async function runWalletStatus(privateKeyFlag?: string): Promise<void> {
     `  ${pc.dim(label.padEnd(COL))}${value}`
 
   console.log()
-  console.log(`  ${pc.bold(pc.cyan('Session Wallet'))}`)
+  console.log(`  ${pc.bold(pc.cyan('Agent Wallet'))}`)
   console.log()
   console.log(row('Address', pc.white(wallet.address)))
   console.log(row('Network', CHAIN_NAME[chainId]))
   console.log(row('Balance', balance !== null ? pc.green(`${balance.toFixed(6)} USDC`) : pc.dim('unavailable')))
+  const nativeSym = NATIVE_SYMBOL[chainId]
+  const nativeStr = nativeBalance !== null
+    ? (nativeBalance < 0.005 ? pc.red(`${nativeBalance.toFixed(6)} ${nativeSym}`) : pc.white(`${nativeBalance.toFixed(6)} ${nativeSym}`))
+    : pc.dim('unavailable')
+  console.log(row(`Gas (${nativeSym})`, nativeStr))
   console.log()
   console.log(row('Session expires', formatExpiry(wallet.expiresAt)))
-  console.log(row('Spend limit', `${pc.white(`$${wallet.caps.perCall.toFixed(2)} / call`)} ${pc.dim('·')} ${pc.white(`$${wallet.caps.perDay.toFixed(2)} / day`)}`))
+  console.log(row('Spend limit', `${pc.white(`$${wallet.caps.perCall.toFixed(2)}/call`)} ${pc.dim('·')} ${pc.white(`$${wallet.caps.perDay.toFixed(2)}/day`)}`))
   console.log(row('Spent today', `${pc.yellow(`$${spentToday.toFixed(4)}`)}  ${pc.dim(`(${txCount} transaction${txCount === 1 ? '' : 's'})`)}`))
   console.log()
 }
