@@ -2,8 +2,11 @@ import pc from 'picocolors'
 import { createSessionWallet } from '@meshpay/wallet'
 
 /** `meshpay wallet status` — show current session wallet state */
-export async function runWalletStatus(): Promise<void> {
+export async function runWalletStatus(privateKeyFlag?: string): Promise<void> {
+  // Priority: --key flag > AGENT_PRIVATE_KEY env > ephemeral
+  const privateKey = (privateKeyFlag ?? process.env['AGENT_PRIVATE_KEY']) as `0x${string}` | undefined
   const wallet = createSessionWallet({
+    privateKey,
     caps: {
       perCall: Number(process.env['MESHPAY_CAP_PER_CALL'] ?? 0.05),
       perDay: Number(process.env['MESHPAY_CAP_PER_DAY'] ?? 5.0),

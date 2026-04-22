@@ -1,3 +1,4 @@
+import 'dotenv/config'
 import pc from 'picocolors'
 import { createRequire } from 'node:module'
 import { runInit } from './commands/init.js'
@@ -16,14 +17,16 @@ function printHelp() {
   ${pc.bold(pc.cyan('meshpay'))} v${VERSION} — Micropayment infrastructure for AI agents
 
   ${pc.bold('Usage:')}
-    ${pc.cyan('meshpay init')} ${pc.dim('[--framework vercel|mastra|openai]')}   Scaffold config & example tool
-    ${pc.cyan('meshpay wallet status')}                               Show session wallet state
-    ${pc.cyan('meshpay wallet probe')} ${pc.dim('<url>')}                        Probe URL for x402 requirements
-    ${pc.cyan('meshpay --version')}                                   Print version
-    ${pc.cyan('meshpay --help')}                                      Show this help
+    ${pc.cyan('meshpay init')} ${pc.dim('[--framework vercel|mastra|openai]')}         Scaffold config & example tool
+    ${pc.cyan('meshpay wallet status')} ${pc.dim('[--key 0x...]')}                      Show session wallet state
+    ${pc.cyan('meshpay wallet probe')} ${pc.dim('<url>')}                               Probe URL for x402 requirements
+    ${pc.cyan('meshpay --version')}                                             Print version
+    ${pc.cyan('meshpay --help')}                                                Show this help
 
   ${pc.bold('Examples:')}
     ${pc.dim('$')} npx @meshpay/cli init --framework vercel
+    ${pc.dim('$')} npx @meshpay/cli wallet status                  ${pc.dim('# reads AGENT_PRIVATE_KEY from .env')}
+    ${pc.dim('$')} npx @meshpay/cli wallet status --key 0xe01...   ${pc.dim('# override with explicit key')}
     ${pc.dim('$')} npx @meshpay/cli wallet probe https://api.example.com/x402/search
 `)
 }
@@ -82,7 +85,9 @@ async function main() {
 
     case 'wallet': {
       if (subCommand === 'status') {
-        await runWalletStatus()
+        const keyIdx = args.indexOf('--key')
+        const privateKey = keyIdx !== -1 ? args[keyIdx + 1] : undefined
+        await runWalletStatus(privateKey)
       } else if (subCommand === 'probe') {
         await runWalletProbe(args[0] ?? '')
       } else {

@@ -23,6 +23,7 @@
     "@meshpay/core": "workspace:*",
     "@meshpay/protocols": "workspace:*",
     "@meshpay/wallet": "workspace:*",
+    "dotenv": "^16.6.1",
     "picocolors": "^1.1.1"
   },
   "license": "MIT",
