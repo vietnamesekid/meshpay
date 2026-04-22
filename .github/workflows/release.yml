@@ -14,7 +14,6 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: write
-      pull-requests: write
       id-token: write
 
     steps:
@@ -42,13 +41,19 @@ jobs:
           key: turbo-release-${{ github.sha }}
           restore-keys: turbo-release-
 
-      - name: Create Release PR or Publish
-        uses: changesets/action@v1
-        with:
-          publish: pnpm release
-          title: "chore: release packages"
-          commit: "chore: release packages"
+      - name: Bump versions
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          pnpm changeset version
+
+      - name: Build & publish
+        run: pnpm release
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: Push version bumps & tags
+        run: |
+          git add -A
+          git diff --cached --quiet || git commit -m "chore: release packages"
+          git push origin HEAD --follow-tags
