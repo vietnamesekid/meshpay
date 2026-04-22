@@ -1,10 +1,12 @@
 import pc from 'picocolors'
+import { createRequire } from 'node:module'
 import { runInit } from './commands/init.js'
 import { runWalletProbe, runWalletStatus } from './commands/wallet.js'
 
 const [, , command, ...rest] = process.argv
 
-const VERSION = '0.2.0'
+const require = createRequire(import.meta.url)
+const VERSION: string = (require('../package.json') as { version: string }).version
 
 const FRAMEWORKS = ['vercel', 'mastra', 'openai'] as const
 type Framework = typeof FRAMEWORKS[number]
