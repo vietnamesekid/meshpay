@@ -27,8 +27,8 @@ import { server as resourceServer, AMOY_PORT } from './amoy-x402-server.js'
 
 // ─── Config ───────────────────────────────────────────────────────────────────
 
-const PRIVATE_KEY = process.env['WALLET_PRIVATE_KEY'] as `0x${string}` | undefined
-if (!PRIVATE_KEY) throw new Error('WALLET_PRIVATE_KEY not set in .env')
+const PRIVATE_KEY = process.env['AGENT_PRIVATE_KEY'] as `0x${string}` | undefined
+if (!PRIVATE_KEY) throw new Error('AGENT_PRIVATE_KEY not set in .env')
 if (!process.env['OPENAI_API_KEY']) throw new Error('OPENAI_API_KEY not set in .env')
 
 const SERVER = `http://localhost:${AMOY_PORT}`

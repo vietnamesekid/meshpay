@@ -24,7 +24,8 @@
     "@meshpay/protocols": "workspace:*",
     "@meshpay/wallet": "workspace:*",
     "dotenv": "^16.6.1",
-    "picocolors": "^1.1.1"
+    "picocolors": "^1.1.1",
+    "viem": "^2.48.4"
   },
   "license": "MIT",
   "publishConfig": {
