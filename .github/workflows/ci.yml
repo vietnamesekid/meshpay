@@ -12,9 +12,10 @@ concurrency:
 
 jobs:
   ci:
-    name: Build, Lint & Test
+    name: Build, Lint & Test (node ${{ matrix.node-version }})
     runs-on: ubuntu-latest
     strategy:
+      fail-fast: false
       matrix:
         node-version: [20, 22]
 
@@ -53,3 +54,13 @@ jobs:
 
       - name: Test
         run: pnpm test:ci
+
+  ci-success:
+    name: CI
+    needs: ci
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - name: All matrix jobs passed
+        if: ${{ contains(needs.ci.result, 'failure') || contains(needs.ci.result, 'cancelled') }}
+        run: exit 1
