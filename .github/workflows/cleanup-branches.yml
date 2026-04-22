@@ -1,0 +1,62 @@
+name: Cleanup Merged Branches
+
+on:
+  pull_request:
+    types: [closed]
+    branches: [master]
+  workflow_dispatch:
+
+jobs:
+  cleanup:
+    name: Delete merged branches
+    runs-on: ubuntu-latest
+    if: github.event_name == 'workflow_dispatch' || github.event.pull_request.merged == true
+    permissions:
+      contents: write
+
+    steps:
+      - name: Delete merged branches
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const PROTECTED = /^(master|release\/v.+|changeset-release\/.+)$/;
+
+            const { data: branches } = await github.rest.repos.listBranches({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              per_page: 100,
+            });
+
+            const { data: mergedPRs } = await github.rest.pulls.list({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: 'closed',
+              base: 'master',
+              per_page: 100,
+            });
+
+            const mergedHeads = new Set(
+              mergedPRs
+                .filter(pr => pr.merged_at)
+                .map(pr => pr.head.ref)
+            );
+
+            const toDelete = branches.filter(b =>
+              !PROTECTED.test(b.name) && mergedHeads.has(b.name)
+            );
+
+            if (toDelete.length === 0) {
+              console.log('No merged branches to delete.');
+              return;
+            }
+
+            for (const branch of toDelete) {
+              console.log(`Deleting branch: ${branch.name}`);
+              await github.rest.git.deleteRef({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                ref: `heads/${branch.name}`,
+              });
+            }
+
+            console.log(`Deleted ${toDelete.length} branch(es).`);
