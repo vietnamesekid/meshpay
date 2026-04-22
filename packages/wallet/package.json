@@ -1,6 +1,6 @@
 {
   "name": "@meshpay/wallet",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Non-custodial wallet session manager",
   "type": "module",
   "main": "./dist/index.js",
@@ -11,9 +11,13 @@
       "import": "./dist/index.js"
     }
   },
-  "files": ["dist"],
+  "files": [
+    "dist"
+  ],
   "sideEffects": false,
-  "engines": { "node": ">=20" },
+  "engines": {
+    "node": ">=20"
+  },
   "scripts": {
     "build": "tsup",
     "dev": "tsup --watch",

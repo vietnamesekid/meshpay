@@ -1,6 +1,6 @@
 {
   "name": "@meshpay/protocols",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Protocol adapters for x402, AP2, ACP",
   "type": "module",
   "main": "./dist/index.js",
@@ -19,9 +19,13 @@
       "import": "./dist/ap2/index.js"
     }
   },
-  "files": ["dist"],
+  "files": [
+    "dist"
+  ],
   "sideEffects": false,
-  "engines": { "node": ">=20" },
+  "engines": {
+    "node": ">=20"
+  },
   "scripts": {
     "build": "tsup",
     "dev": "tsup --watch",

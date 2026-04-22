@@ -1,11 +1,17 @@
 {
   "name": "@meshpay/cli",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "CLI dev tools — npx meshpay init",
   "type": "module",
-  "bin": { "meshpay": "./dist/index.js" },
-  "files": ["dist"],
-  "engines": { "node": ">=20" },
+  "bin": {
+    "meshpay": "./dist/index.js"
+  },
+  "files": [
+    "dist"
+  ],
+  "engines": {
+    "node": ">=20"
+  },
   "scripts": {
     "build": "tsup",
     "dev": "tsup --watch",
