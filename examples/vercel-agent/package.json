@@ -1,6 +1,6 @@
 {
   "name": "@meshpay/example-vercel-agent",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "Demo: paid research agent using Vercel AI SDK + MeshPay x402 on Polygon Amoy",
   "type": "module",
   "private": true,
