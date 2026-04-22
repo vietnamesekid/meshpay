@@ -5,11 +5,28 @@ import { base, polygon, arbitrum, polygonAmoy } from 'viem/chains'
 import type { ChainId } from '@meshpay/core'
 
 const USDC: Record<ChainId, `0x${string}`> = {
-  'eip155:8453':  '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913',
-  'eip155:137':   '0x3c499c542cEF5E3811e1192ce70d8cC03d5c3359',
-  'eip155:42161': '0xaf88d065e77c8cC2239327C5EDb3A432268e5831',
-  'eip155:80002': '0x41E94Eb019C0762f9Bfcf9Fb1E58725BfB0e7582',
-  'solana:mainnet': '0x0000000000000000000000000000000000000000', // not supported
+  'eip155:8453':    '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913',
+  'eip155:137':     '0x3c499c542cEF5E3811e1192ce70d8cC03d5c3359',
+  'eip155:42161':   '0xaf88d065e77c8cC2239327C5EDb3A432268e5831',
+  'eip155:80002':   '0x41E94Eb019C0762f9Bfcf9Fb1E58725BfB0e7582',
+  'solana:mainnet': '0x0000000000000000000000000000000000000000',
+}
+
+const CHAIN_NAME: Record<ChainId, string> = {
+  'eip155:8453':    'Base',
+  'eip155:137':     'Polygon',
+  'eip155:42161':   'Arbitrum',
+  'eip155:80002':   'Polygon Amoy (testnet)',
+  'solana:mainnet': 'Solana',
+}
+
+function formatExpiry(expiresAt: Date): string {
+  const mins = Math.round((expiresAt.getTime() - Date.now()) / 60_000)
+  if (mins <= 0) return pc.red('expired')
+  if (mins < 60) return pc.yellow(`in ${mins} minute${mins === 1 ? '' : 's'}`)
+  const hrs = Math.floor(mins / 60)
+  const rem = mins % 60
+  return pc.green(`in ${hrs}h ${rem}m`)
 }
 
 const BALANCE_OF_ABI = [{
@@ -57,23 +74,19 @@ export async function runWalletStatus(privateKeyFlag?: string): Promise<void> {
     },
   })
 
+  const balance = await fetchUsdcBalance(wallet.address as `0x${string}`, chainId)
+  const { spentToday, txCount } = wallet.state
+
   console.log()
   console.log(`  ${pc.bold(pc.cyan('Session Wallet'))}`)
   console.log()
-  console.log(`  ${pc.dim('Address  ')}  ${pc.white(wallet.address)}`)
-  console.log(`  ${pc.dim('Chain    ')}  ${chainId}`)
-  console.log(`  ${pc.dim('Expires  ')}  ${wallet.expiresAt.toISOString()}`)
-  console.log(`  ${pc.dim('Cap/call ')}  ${pc.green(`$${wallet.caps.perCall}`)}`)
-  console.log(`  ${pc.dim('Cap/day  ')}  ${pc.green(`$${wallet.caps.perDay}`)}`)
-  console.log(`  ${pc.dim('Spent    ')}  ${pc.yellow(`$${wallet.state.spentToday.toFixed(4)}`)}`)
-  console.log(`  ${pc.dim('Tx count ')}  ${wallet.state.txCount}`)
-
-  const balance = await fetchUsdcBalance(wallet.address as `0x${string}`, chainId)
-  if (balance !== null) {
-    console.log(`  ${pc.dim('USDC     ')}  ${pc.green(`$${balance.toFixed(6)}`)}`)
-  } else {
-    console.log(`  ${pc.dim('USDC     ')}  ${pc.dim('unavailable')}`)
-  }
+  console.log(`  ${pc.dim('Address')}        ${pc.white(wallet.address)}`)
+  console.log(`  ${pc.dim('Network')}        ${CHAIN_NAME[chainId]}`)
+  console.log(`  ${pc.dim('Balance')}        ${balance !== null ? pc.green(`${balance.toFixed(6)} USDC`) : pc.dim('unavailable')}`)
+  console.log()
+  console.log(`  ${pc.dim('Session expires')}  ${formatExpiry(wallet.expiresAt)}`)
+  console.log(`  ${pc.dim('Spend limit')}     ${pc.white(`$${wallet.caps.perCall.toFixed(2)} / call`)} ${pc.dim('·')} ${pc.white(`$${wallet.caps.perDay.toFixed(2)} / day`)}`)
+  console.log(`  ${pc.dim('Spent today')}     ${pc.yellow(`$${spentToday.toFixed(4)}`)}  ${pc.dim(`(${txCount} transaction${txCount === 1 ? '' : 's'})`)}`)
   console.log()
 }
 
