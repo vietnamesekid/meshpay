@@ -1,6 +1,6 @@
 {
   "name": "@meshpay/adapters",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "MeshPay adapters for Vercel AI SDK, Mastra, and OpenAI Agents SDK",
   "type": "module",
   "main": "./dist/index.js",
