@@ -1,4 +1,4 @@
-import { createHmac, createHash, randomUUID } from 'node:crypto'
+import { createHmac, timingSafeEqual as cryptoTimingSafeEqual, randomUUID } from 'node:crypto'
 import type {
   AgentId,
   AgentIdentity,
@@ -82,7 +82,7 @@ export function verifyAuthorizationRequest(
   }
 
   // 2. Verify agent exists
-  const agent = opts.agents.find(a => a.id === req.agentId)
+  const agent = opts.agents.find((a) => a.id === req.agentId)
   if (!agent) {
     return { valid: false, reason: `Unknown agent: ${req.agentId}` }
   }
@@ -135,13 +135,13 @@ function verifyDelegationChain(
     // Recipient allowlist check
     if (
       delegation.allowedRecipients.length > 0 &&
-      !delegation.allowedRecipients.some(r => req.recipient.startsWith(r))
+      !delegation.allowedRecipients.some((r) => req.recipient.startsWith(r))
     ) {
       return { valid: false, reason: `Recipient ${req.recipient} not in delegation allowlist` }
     }
 
     // Signature check — delegator must have signed this delegation
-    const delegator = agents.find(a => a.id === delegation.delegatorId)
+    const delegator = agents.find((a) => a.id === delegation.delegatorId)
     if (!delegator) {
       return { valid: false, reason: `Unknown delegator: ${delegation.delegatorId}` }
     }
@@ -298,18 +298,15 @@ function stableStringify(value: unknown): string {
   if (Array.isArray(value)) return `[${value.map(stableStringify).join(',')}]`
   const sorted = Object.keys(value as object)
     .sort()
-    .map(k => `${JSON.stringify(k)}:${stableStringify((value as Record<string, unknown>)[k])}`)
+    .map((k) => `${JSON.stringify(k)}:${stableStringify((value as Record<string, unknown>)[k])}`)
     .join(',')
   return `{${sorted}}`
 }
 
 function timingSafeEqual(a: string, b: string): boolean {
-  const bufA = Buffer.from(createHash('sha256').update(a).digest())
-  const bufB = Buffer.from(createHash('sha256').update(b).digest())
-  if (bufA.length !== bufB.length) return false
-  let diff = 0
-  for (let i = 0; i < bufA.length; i++) {
-    diff |= (bufA[i] ?? 0) ^ (bufB[i] ?? 0)
+  if (a.length === b.length) {
+    return cryptoTimingSafeEqual(Buffer.from(a), Buffer.from(b))
   }
-  return diff === 0
+
+  return false
 }

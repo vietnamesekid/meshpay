@@ -1,0 +1,10 @@
+{
+  "files": [],
+  "references": [
+    { "path": "packages/core" },
+    { "path": "packages/wallet" },
+    { "path": "packages/protocols" },
+    { "path": "packages/adapters" },
+    { "path": "packages/cli" }
+  ]
+}

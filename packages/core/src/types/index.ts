@@ -1,6 +1,6 @@
 // ─── Chain & Token ────────────────────────────────────────────────────────────
 
-export type ChainId = 'eip155:8453' | 'eip155:137' | 'eip155:42161' | 'solana:mainnet'
+export type ChainId = 'eip155:8453' | 'eip155:137' | 'eip155:42161' | 'eip155:80002' | 'solana:mainnet'
 
 export type TokenSymbol = 'USDC' | 'USDT' | 'DAI'
 
@@ -85,6 +85,7 @@ export interface Signature {
 
 export interface AgentWallet {
   address: string
+  chainId: ChainId
   caps: SpendCap
   state: SpendState
   sign(quote: Quote): Promise<Signature>
@@ -110,6 +111,8 @@ export interface PaidToolOptions<TInput, TOutput> {
   maxCostPerCall: number
   /** Max USD spend per day — rejects if daily cap exceeded */
   maxCostPerDay: number
+  /** CAIP-2 chain id — used when auto-creating the default wallet. Ignored if wallet is set explicitly. */
+  chainId?: Exclude<ChainId, 'solana:mainnet'>
   /** The actual tool handler */
   handler: (input: TInput) => Promise<TOutput>
   /** Override default wallet */

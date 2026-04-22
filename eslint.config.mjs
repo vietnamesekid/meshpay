@@ -9,6 +9,7 @@ export default [
       parser: tsparser,
       parserOptions: {
         projectService: true,
+        tsconfigRootDir: import.meta.dirname,
       },
     },
     plugins: {

@@ -15,8 +15,16 @@ import { createSessionWallet } from '@meshpay/wallet'
 let _defaultFacilitator: Facilitator | undefined
 let _defaultWallet: AgentWallet | undefined
 
-// Signing key for AP2 tokens — in production, load from env/config
-const AP2_SIGNING_KEY = process.env['MESHPAY_AP2_KEY'] ?? 'meshpay-dev-key'
+const AP2_SIGNING_KEY = (() => {
+  const key = process.env['MESHPAY_AP2_KEY']
+  if (!key) {
+    throw new Error(
+      'MESHPAY_AP2_KEY environment variable is required. ' +
+      'Generate one with: node -e "console.log(require(\'crypto\').randomBytes(32).toString(\'hex\'))"',
+    )
+  }
+  return key
+})()
 
 /** Override default facilitator used by all paidTool() calls */
 export function setDefaultFacilitator(f: Facilitator): void {
@@ -33,12 +41,10 @@ function getDefaultFacilitator(): Facilitator {
   return _defaultFacilitator
 }
 
-function getDefaultWallet(opts: Pick<PaidToolOptions<unknown, unknown>, 'maxCostPerCall' | 'maxCostPerDay'>): AgentWallet {
+function getDefaultWallet(opts: Pick<PaidToolOptions<unknown, unknown>, 'maxCostPerCall' | 'maxCostPerDay' | 'chainId'>): AgentWallet {
   _defaultWallet ??= createSessionWallet({
-    caps: {
-      perCall: opts.maxCostPerCall,
-      perDay: opts.maxCostPerDay,
-    },
+    caps: { perCall: opts.maxCostPerCall, perDay: opts.maxCostPerDay },
+    chainId: opts.chainId,
   })
   return _defaultWallet
 }
@@ -83,8 +89,10 @@ export async function runPaidTool<TInput, TOutput>(
     signingKey: AP2_SIGNING_KEY,
   })
 
+  if (!ap2Response.token) throw new PaymentError('AP2 token issuance failed — no token returned')
+
   const extraHeaders: Record<string, string> = {
-    'X-AP2-AUTHORIZATION': ap2Response.token ?? '',
+    'X-AP2-AUTHORIZATION': ap2Response.token,
     'X-AP2-AGENT-ID': ap2Request.agentId,
   }
 
@@ -95,7 +103,7 @@ export async function runPaidTool<TInput, TOutput>(
       recipient: paymentEndpoint,
       amount: opts.maxCostPerCall,
       token: 'USDC',
-      chainId: 'eip155:8453',
+      chainId: wallet.chainId,
       memo: opts.name,
       resource: opts.name,
       extraHeaders,

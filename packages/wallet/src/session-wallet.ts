@@ -1,5 +1,6 @@
 import {
   type AgentWallet,
+  type ChainId,
   type PaymentReceipt,
   type Quote,
   type Signature,
@@ -15,7 +16,7 @@ import {
   http,
 } from 'viem'
 import { generatePrivateKey, privateKeyToAccount } from 'viem/accounts'
-import { base, polygon, arbitrum } from 'viem/chains'
+import { base, polygon, arbitrum, polygonAmoy } from 'viem/chains'
 import type { X402Authorization } from '@meshpay/protocols'
 
 export interface SessionWalletOptions {
@@ -25,7 +26,7 @@ export interface SessionWalletOptions {
   sessionTtlMs?: number
   caps: SpendCap
   /** CAIP-2 chain id — defaults to eip155:8453 (Base) */
-  chainId?: 'eip155:8453' | 'eip155:137' | 'eip155:42161'
+  chainId?: Exclude<ChainId, 'solana:mainnet'>
 }
 
 // EIP-3009 TransferWithAuthorization typed data definition (EIP-712)
@@ -61,11 +62,19 @@ const USDC_DOMAIN: Record<string, { name: string; version: string; address: `0x$
     address: '0xaf88d065e77c8cC2239327C5EDb3A432268e5831',
     chainNumericId: 42161,
   },
+  'eip155:80002': {
+    name: 'USDC',
+    version: '2',
+    address: '0x41E94Eb019C0762f9Bfcf9Fb1E58725BfB0e7582',
+    chainNumericId: 80002,
+  },
 }
 
 function chainFromCaip2(chainId: string) {
   if (chainId === 'eip155:137') return polygon
   if (chainId === 'eip155:42161') return arbitrum
+  if (chainId === 'eip155:80002') return polygonAmoy
+
   return base // default: eip155:8453
 }
 
@@ -84,9 +93,9 @@ function toBytes32(nonce: string): `0x${string}` {
  */
 export class SessionWallet implements AgentWallet {
   readonly address: string
+  readonly chainId: ChainId
   readonly caps: SpendCap
   readonly expiresAt: Date
-  readonly chainId: string
 
   private _state: SpendState
   private readonly client: WalletClient
@@ -94,7 +103,7 @@ export class SessionWallet implements AgentWallet {
   constructor(options: SessionWalletOptions) {
     const privateKey = options.privateKey ?? generatePrivateKey()
     const account = privateKeyToAccount(privateKey)
-    const chainId = options.chainId ?? 'eip155:8453'
+    const chainId: ChainId = options.chainId ?? 'eip155:8453'
 
     this.address = account.address
     this.caps = options.caps
@@ -128,6 +137,12 @@ export class SessionWallet implements AgentWallet {
   async sign(quote: Quote): Promise<Signature> {
     if (new Date() >= this.expiresAt) {
       throw new Error('Wallet session has expired — create a new SessionWallet')
+    }
+
+    if (quote.request.chainId !== this.chainId) {
+      throw new Error(
+        `Chain mismatch: quote is for ${quote.request.chainId} but wallet is on ${this.chainId}`,
+      )
     }
 
     const auth = quote.rawTx as X402Authorization

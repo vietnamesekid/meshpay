@@ -3,6 +3,7 @@ export default defineConfig({
   entry: ['src/index.ts', 'src/x402/index.ts'],
   format: ['esm'],
   dts: true,
+  tsconfig: 'tsconfig.json',
   clean: true,
   sourcemap: true,
   treeshake: true,

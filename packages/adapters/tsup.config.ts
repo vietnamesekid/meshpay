@@ -9,6 +9,7 @@ export default defineConfig({
   ],
   format: ['esm'],
   dts: true,
+  tsconfig: 'tsconfig.json',
   clean: true,
   sourcemap: true,
   treeshake: true,
