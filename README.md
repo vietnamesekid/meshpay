@@ -1,7 +1,6 @@
 # MeshPay
 
 [![CI](https://github.com/vietnamesekid/meshpay/actions/workflows/ci.yml/badge.svg)](https://github.com/vietnamesekid/meshpay/actions/workflows/ci.yml)
-[![npm](https://img.shields.io/npm/v/@meshpay/adapters?label=%40meshpay%2Fadapters)](https://www.npmjs.com/package/@meshpay/adapters)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
 Micropayment infrastructure for AI agents — spend-guarded, non-custodial, on-chain.
@@ -26,13 +25,13 @@ No custodians. Keys never leave the client.
 
 ## Packages
 
-| Package | Description |
-|---|---|
-| [`@meshpay/core`](packages/core) | Core types, spend guards, and shared interfaces |
-| [`@meshpay/wallet`](packages/wallet) | `SessionWallet` — ephemeral non-custodial wallet |
-| [`@meshpay/protocols`](packages/protocols) | x402 and AP2 protocol implementations |
-| [`@meshpay/adapters`](packages/adapters) | Framework adapters (Vercel AI, Mastra, OpenAI) |
-| [`@meshpay/cli`](packages/cli) | `meshpay` CLI for setup and debugging |
+| Package | Description | Version |
+|---|---|---|
+| [`@meshpay/core`](packages/core) | Core types, spend guards, and shared interfaces | [![npm](https://img.shields.io/npm/v/@meshpay/core)](https://www.npmjs.com/package/@meshpay/core) |
+| [`@meshpay/wallet`](packages/wallet) | `SessionWallet` — ephemeral non-custodial wallet | [![npm](https://img.shields.io/npm/v/@meshpay/wallet)](https://www.npmjs.com/package/@meshpay/wallet) |
+| [`@meshpay/protocols`](packages/protocols) | x402 and AP2 protocol implementations | [![npm](https://img.shields.io/npm/v/@meshpay/protocols)](https://www.npmjs.com/package/@meshpay/protocols) |
+| [`@meshpay/adapters`](packages/adapters) | Framework adapters (Vercel AI, Mastra, OpenAI) | [![npm](https://img.shields.io/npm/v/@meshpay/adapters)](https://www.npmjs.com/package/@meshpay/adapters) |
+| [`@meshpay/cli`](packages/cli) | `meshpay` CLI for setup and debugging | [![npm](https://img.shields.io/npm/v/@meshpay/cli)](https://www.npmjs.com/package/@meshpay/cli) |
 
 ---
 
@@ -42,6 +41,13 @@ No custodians. Keys never leave the client.
 
 ```bash
 pnpm add @meshpay/core @meshpay/wallet @meshpay/protocols @meshpay/adapters
+```
+
+**Required env var:**
+
+```bash
+# Generate a signing key for AP2 agent authorization
+MESHPAY_AP2_KEY=$(node -e "console.log(require('crypto').randomBytes(32).toString('hex'))")
 ```
 
 ### Vercel AI SDK
