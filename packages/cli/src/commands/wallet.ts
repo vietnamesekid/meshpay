@@ -1,5 +1,4 @@
 import { createSessionWallet } from '@meshpay/wallet'
-import { createX402Facilitator } from '@meshpay/protocols'
 
 /** `meshpay wallet status` — show current session wallet state */
 export async function runWalletStatus(): Promise<void> {
