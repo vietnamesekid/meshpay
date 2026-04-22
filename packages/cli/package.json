@@ -22,7 +22,8 @@
   "dependencies": {
     "@meshpay/core": "workspace:*",
     "@meshpay/protocols": "workspace:*",
-    "@meshpay/wallet": "workspace:*"
+    "@meshpay/wallet": "workspace:*",
+    "picocolors": "^1.1.1"
   },
   "license": "MIT",
   "publishConfig": {
