@@ -2,10 +2,10 @@ name: Release
 
 on:
   push:
-    branches: [release]
+    branches: ["release/v*"]
 
 concurrency:
-  group: release
+  group: ${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
