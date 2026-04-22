@@ -1,0 +1,27 @@
+{
+  "name": "@meshpay/example-vercel-agent",
+  "version": "0.0.0",
+  "description": "Demo: paid research agent using Vercel AI SDK + MeshPay x402 on Polygon Amoy",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "agent": "tsx src/agent.ts",
+    "amoy-e2e": "tsx src/amoy-e2e.ts"
+  },
+  "dependencies": {
+    "@meshpay/adapters": "workspace:*",
+    "@meshpay/core": "workspace:*",
+    "@meshpay/protocols": "workspace:*",
+    "@meshpay/wallet": "workspace:*",
+    "ai": "^4.3.16",
+    "@ai-sdk/openai": "^1.3.22",
+    "dotenv": "^16.5.0",
+    "viem": "^2.48.4",
+    "zod": "^3.25.76"
+  },
+  "devDependencies": {
+    "@meshpay/tsconfig": "workspace:^",
+    "tsx": "^4.19.3",
+    "typescript": "^5.9.3"
+  }
+}
