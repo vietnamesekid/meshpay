@@ -146,6 +146,9 @@ importers:
       '@meshpay/wallet':
         specifier: workspace:*
         version: link:../wallet
+      picocolors:
+        specifier: ^1.1.1
+        version: 1.1.1
     devDependencies:
       '@meshpay/tsconfig':
         specifier: workspace:^

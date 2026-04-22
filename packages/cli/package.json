@@ -1,6 +1,6 @@
 {
   "name": "@meshpay/cli",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "CLI dev tools — npx meshpay init",
   "type": "module",
   "bin": {
@@ -22,7 +22,8 @@
   "dependencies": {
     "@meshpay/core": "workspace:*",
     "@meshpay/protocols": "workspace:*",
-    "@meshpay/wallet": "workspace:*"
+    "@meshpay/wallet": "workspace:*",
+    "picocolors": "^1.1.1"
   },
   "license": "MIT",
   "publishConfig": {
