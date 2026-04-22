@@ -1,5 +1,9 @@
 # MeshPay
 
+[![CI](https://github.com/vietnamesekid/meshpay/actions/workflows/ci.yml/badge.svg)](https://github.com/vietnamesekid/meshpay/actions/workflows/ci.yml)
+[![npm](https://img.shields.io/npm/v/@meshpay/adapters?label=%40meshpay%2Fadapters)](https://www.npmjs.com/package/@meshpay/adapters)
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+
 Micropayment infrastructure for AI agents — spend-guarded, non-custodial, on-chain.
 
 MeshPay lets AI agents autonomously pay for tools and APIs using USDC on EVM chains, with per-call and daily spend caps enforced locally before any transaction hits the network. Built on the [x402](https://x402.org) payment protocol and AP2 (Agent Payment Protocol v2).
@@ -198,55 +202,11 @@ OPENAI_API_KEY=sk-...
 
 ---
 
-## Development
+## Contributing
 
-**Prerequisites:** Node ≥ 20, pnpm 10
+Contributions are welcome. See [CONTRIBUTING.md](CONTRIBUTING.md) for setup instructions, commit style, and the release process. Please read our [Code of Conduct](CODE_OF_CONDUCT.md) before participating.
 
-```bash
-# Install dependencies
-pnpm install
-
-# Build all packages
-pnpm build
-
-# Run tests
-pnpm test
-
-# Type check
-pnpm typecheck
-
-# Lint
-pnpm lint
-
-# Watch mode
-pnpm dev
-```
-
-### Project structure
-
-```
-meshpay/
-├── packages/
-│   ├── core/          # Types, spend guards, interfaces
-│   ├── wallet/        # SessionWallet
-│   ├── protocols/     # x402 + AP2 implementations
-│   ├── adapters/      # Framework integrations
-│   └── cli/           # meshpay CLI
-├── internal/          # Private workspace packages
-├── examples/
-│   └── vercel-agent/  # End-to-end demo
-└── docs/
-```
-
-### Release
-
-MeshPay uses [Changesets](https://github.com/changesets/changesets) for versioning.
-
-```bash
-pnpm changeset          # describe your change
-pnpm version-packages   # bump versions
-pnpm release            # build + publish to npm
-```
+To report a security vulnerability, follow the [Security Policy](SECURITY.md) — do not open a public issue.
 
 ---
 
