@@ -13,6 +13,10 @@
     "./x402": {
       "types": "./dist/x402/index.d.ts",
       "import": "./dist/x402/index.js"
+    },
+    "./ap2": {
+      "types": "./dist/ap2/index.d.ts",
+      "import": "./dist/ap2/index.js"
     }
   },
   "files": ["dist"],
