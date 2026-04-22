@@ -24,6 +24,7 @@
   },
   "dependencies": {
     "@meshpay/core": "workspace:*",
+    "@meshpay/protocols": "workspace:*",
     "viem": "^2.48.4"
   },
   "license": "MIT",

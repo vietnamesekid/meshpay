@@ -35,7 +35,9 @@
     "clean": "rm -rf dist .turbo"
   },
   "dependencies": {
-    "@meshpay/core": "workspace:*"
+    "@meshpay/core": "workspace:*",
+    "@meshpay/wallet": "workspace:*",
+    "@meshpay/protocols": "workspace:*"
   },
   "devDependencies": {
     "@meshpay/tsconfig": "workspace:^"

@@ -1,1 +1,1 @@
-export * from './x402'
+export * from './x402/index.js'

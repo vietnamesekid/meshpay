@@ -21,6 +21,9 @@
     "typecheck": "tsc --noEmit",
     "clean": "rm -rf dist .turbo"
   },
+  "dependencies": {
+    "@meshpay/core": "workspace:*"
+  },
   "devDependencies": {
     "@meshpay/tsconfig": "workspace:^"
   },

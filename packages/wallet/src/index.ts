@@ -1,1 +1,1 @@
-// Non-custodial wallet session manager
+export * from './session-wallet.js'

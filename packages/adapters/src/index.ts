@@ -1,3 +1,5 @@
-export * from './vercel/index.js'
-export * from './mastra/index.js'
-export * from './openai/index.js'
+export { setDefaultFacilitator, setDefaultWallet } from './paid-tool-runner.js'
+// Adapter-specific exports available via subpath:
+// @meshpay/adapters/mastra
+// @meshpay/adapters/vercel
+// @meshpay/adapters/openai

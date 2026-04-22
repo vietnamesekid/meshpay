@@ -14,7 +14,9 @@
     "clean": "rm -rf dist .turbo"
   },
   "dependencies": {
-    "@meshpay/core": "workspace:*"
+    "@meshpay/core": "workspace:*",
+    "@meshpay/protocols": "workspace:*",
+    "@meshpay/wallet": "workspace:*"
   },
   "license": "MIT",
   "publishConfig": {
