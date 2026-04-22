@@ -64,7 +64,7 @@ async function fetchUsdcBalance(address: `0x${string}`, chainId: ChainId): Promi
 export async function runWalletStatus(privateKeyFlag?: string): Promise<void> {
   // Priority: --key flag > AGENT_PRIVATE_KEY env > ephemeral
   const privateKey = (privateKeyFlag ?? process.env['AGENT_PRIVATE_KEY']) as `0x${string}` | undefined
-  const chainId = (process.env['MESHPAY_CHAIN_ID'] ?? 'eip155:8453') as ChainId
+  const chainId = (process.env['MESHPAY_CHAIN_ID'] ?? 'eip155:8453') as Exclude<ChainId, 'solana:mainnet'>
   const wallet = createSessionWallet({
     privateKey,
     chainId,
