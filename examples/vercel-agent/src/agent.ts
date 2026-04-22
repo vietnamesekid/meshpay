@@ -22,7 +22,7 @@ import { z } from 'zod'
 import { paidTool } from '@meshpay/adapters/vercel'
 import { meshpay } from '@meshpay/adapters'
 import { createSessionWallet } from '@meshpay/wallet'
-import { AmoyFacilitator } from './amoy-facilitator.js'
+import { AmoyFacilitator, resolveGasPayerKey } from './amoy-facilitator.js'
 import { server as resourceServer, AMOY_PORT } from './amoy-x402-server.js'
 
 // ─── Config ───────────────────────────────────────────────────────────────────
@@ -41,7 +41,7 @@ const wallet = createSessionWallet({
   caps: { perCall: 0.05, perDay: 2.0 },
 })
 
-const facilitator = new AmoyFacilitator(PRIVATE_KEY)
+const facilitator = new AmoyFacilitator(resolveGasPayerKey())
 
 const client = meshpay()
   .withWallet(wallet)
@@ -50,7 +50,8 @@ const client = meshpay()
 console.log('════════════════════════════════════════════════════')
 console.log('  MeshPay Paid Research Agent — Polygon Amoy')
 console.log('════════════════════════════════════════════════════')
-console.log(`  Wallet   : ${wallet.address}`)
+console.log(`  Wallet   : ${wallet.address}  (signs EIP-3009, holds USDC)`)
+console.log(`  Submitter: ${facilitator.submitterAddress}  (pays gas, needs POL)`)
 console.log(`  Chain    : eip155:80002 (Polygon Amoy)`)
 console.log(`  Cap/call : $${wallet.caps.perCall}`)
 console.log(`  Cap/day  : $${wallet.caps.perDay}`)

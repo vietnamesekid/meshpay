@@ -77,16 +77,20 @@ export async function runWalletStatus(privateKeyFlag?: string): Promise<void> {
   const balance = await fetchUsdcBalance(wallet.address as `0x${string}`, chainId)
   const { spentToday, txCount } = wallet.state
 
+  const COL = 18
+  const row = (label: string, value: string) =>
+    `  ${pc.dim(label.padEnd(COL))}${value}`
+
   console.log()
   console.log(`  ${pc.bold(pc.cyan('Session Wallet'))}`)
   console.log()
-  console.log(`  ${pc.dim('Address')}        ${pc.white(wallet.address)}`)
-  console.log(`  ${pc.dim('Network')}        ${CHAIN_NAME[chainId]}`)
-  console.log(`  ${pc.dim('Balance')}        ${balance !== null ? pc.green(`${balance.toFixed(6)} USDC`) : pc.dim('unavailable')}`)
+  console.log(row('Address', pc.white(wallet.address)))
+  console.log(row('Network', CHAIN_NAME[chainId]))
+  console.log(row('Balance', balance !== null ? pc.green(`${balance.toFixed(6)} USDC`) : pc.dim('unavailable')))
   console.log()
-  console.log(`  ${pc.dim('Session expires')}  ${formatExpiry(wallet.expiresAt)}`)
-  console.log(`  ${pc.dim('Spend limit')}     ${pc.white(`$${wallet.caps.perCall.toFixed(2)} / call`)} ${pc.dim('·')} ${pc.white(`$${wallet.caps.perDay.toFixed(2)} / day`)}`)
-  console.log(`  ${pc.dim('Spent today')}     ${pc.yellow(`$${spentToday.toFixed(4)}`)}  ${pc.dim(`(${txCount} transaction${txCount === 1 ? '' : 's'})`)}`)
+  console.log(row('Session expires', formatExpiry(wallet.expiresAt)))
+  console.log(row('Spend limit', `${pc.white(`$${wallet.caps.perCall.toFixed(2)} / call`)} ${pc.dim('·')} ${pc.white(`$${wallet.caps.perDay.toFixed(2)} / day`)}`))
+  console.log(row('Spent today', `${pc.yellow(`$${spentToday.toFixed(4)}`)}  ${pc.dim(`(${txCount} transaction${txCount === 1 ? '' : 's'})`)}`))
   console.log()
 }
 
