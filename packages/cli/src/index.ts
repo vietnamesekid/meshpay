@@ -22,8 +22,9 @@ Usage:
 async function main() {
   switch (command) {
     case 'init': {
-      const frameworkFlag = args.find((_, i) => args[i - 1] === '--framework') ?? 'mastra'
-      const framework = (['mastra', 'vercel', 'openai'] as const).find((f) => f === frameworkFlag) ?? 'mastra'
+      // argv: meshpay init --framework vercel → subCommand='--framework', args[0]='vercel'
+      const rawFramework = subCommand === '--framework' ? args[0] : subCommand
+      const framework = (['mastra', 'vercel', 'openai'] as const).find((f) => f === rawFramework) ?? 'mastra'
       console.log(`\nInitializing MeshPay for ${framework}...\n`)
       await runInit(framework)
       break

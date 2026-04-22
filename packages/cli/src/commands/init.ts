@@ -2,38 +2,56 @@ import { existsSync, mkdirSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
 
 const ENV_TEMPLATE = `# MeshPay configuration
-# Get your Coinbase CDP API key at https://portal.cdp.coinbase.com
+
+# Required: AP2 signing key — generate with:
+# node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
+MESHPAY_AP2_KEY=
+
+# Required: Coinbase CDP API key — https://portal.cdp.coinbase.com
 COINBASE_CDP_API_KEY=
 
-# Optional: override default facilitator endpoint
-# MESHPAY_FACILITATOR_URL=https://api.cdp.coinbase.com/platform/v1/x402/facilitate
-
-# Optional: default spend caps (USD)
+# Optional: spend caps (USD)
 # MESHPAY_CAP_PER_CALL=0.05
 # MESHPAY_CAP_PER_DAY=5.00
 `
 
-const CONFIG_TEMPLATE = `import type { MeshPayConfig } from '@meshpay/core'
+const EXAMPLE_TEMPLATE = (framework: 'mastra' | 'vercel' | 'openai') => {
+  const shared = `import { meshpay } from '@meshpay/adapters'
+import { createSessionWallet } from '@meshpay/wallet'
+import { X402Facilitator } from '@meshpay/protocols'
 
-const config: MeshPayConfig = {
-  facilitator: 'coinbase-cdp', // or 'dexter' | 'custom'
-  chain: 'eip155:8453',        // Base mainnet
-  token: 'USDC',
-  defaultCaps: {
-    perCall: 0.05,   // max $0.05 per tool call
-    perDay: 5.00,    // max $5.00 per day
-  },
-}
-
-export default config
+const client = meshpay()
+  .withWallet(createSessionWallet({
+    privateKey: process.env.AGENT_PRIVATE_KEY as \`0x\${string}\`,
+    chainId: 'eip155:8453', // Base mainnet
+    caps: { perCall: 0.05, perDay: 5.00 },
+  }))
+  .withFacilitator(new X402Facilitator({ apiKey: process.env.COINBASE_CDP_API_KEY }))
 `
 
-const EXAMPLE_TEMPLATE = (framework: string) => {
   switch (framework) {
-    case 'mastra':
-      return `import { paidTool } from '@meshpay/adapters/mastra'
+    case 'vercel':
+      return `${shared}
+import { paidTool } from '@meshpay/adapters/vercel'
+import { z } from 'zod'
 
-// Paid browser-automation tool using Browserbase x402 endpoint
+export const searchTool = paidTool({
+  name: 'search',
+  description: 'Search the web and return structured results',
+  parameters: z.object({ query: z.string().describe('The search query') }),
+  maxCostPerCall: 0.01,
+  maxCostPerDay: 1.00,
+  paymentEndpoint: 'https://api.firecrawl.dev/x402/search',
+  handler: async ({ query }) => {
+    // TODO: implement with @mendable/firecrawl-js
+    return { query, results: [] }
+  },
+}, client)
+`
+    case 'mastra':
+      return `${shared}
+import { paidTool } from '@meshpay/adapters/mastra'
+
 export const browseTool = paidTool({
   name: 'browse',
   description: 'Open a browser session and navigate to a URL',
@@ -44,28 +62,12 @@ export const browseTool = paidTool({
     // TODO: implement with @browserbasehq/sdk
     return { url, status: 'opened' }
   },
-})
+}, client)
 `
-    case 'vercel':
-      return `import { paidTool } from '@meshpay/adapters/vercel'
+    case 'openai':
+      return `${shared}
+import { paidTool } from '@meshpay/adapters/openai'
 
-// Paid search tool using Firecrawl x402 endpoint
-export const searchTool = paidTool({
-  name: 'search',
-  description: 'Search the web and return structured results',
-  maxCostPerCall: 0.01,
-  maxCostPerDay: 1.00,
-  paymentEndpoint: 'https://api.firecrawl.dev/x402/search',
-  handler: async ({ query }: { query: string }) => {
-    // TODO: implement with @mendable/firecrawl-js
-    return { query, results: [] }
-  },
-})
-`
-    default:
-      return `import { paidTool } from '@meshpay/adapters/openai'
-
-// Paid deep-research tool using Heurist x402 endpoint
 export const researchTool = paidTool({
   name: 'deep_research',
   description: 'Run a deep research query via Heurist AI',
@@ -76,7 +78,7 @@ export const researchTool = paidTool({
     // TODO: implement with heurist SDK
     return { query, report: '' }
   },
-})
+}, client)
 `
   }
 }
@@ -84,7 +86,6 @@ export const researchTool = paidTool({
 export async function runInit(framework: 'mastra' | 'vercel' | 'openai' = 'mastra'): Promise<void> {
   const cwd = process.cwd()
 
-  // Write .env.local (skip if exists)
   const envPath = join(cwd, '.env.local')
   if (!existsSync(envPath)) {
     writeFileSync(envPath, ENV_TEMPLATE, 'utf-8')
@@ -93,16 +94,6 @@ export async function runInit(framework: 'mastra' | 'vercel' | 'openai' = 'mastr
     console.log('  skipped  .env.local (already exists)')
   }
 
-  // Write meshpay.config.ts
-  const configPath = join(cwd, 'meshpay.config.ts')
-  if (!existsSync(configPath)) {
-    writeFileSync(configPath, CONFIG_TEMPLATE, 'utf-8')
-    console.log('  created  meshpay.config.ts')
-  } else {
-    console.log('  skipped  meshpay.config.ts (already exists)')
-  }
-
-  // Write example tool
   const examplesDir = join(cwd, 'meshpay-examples')
   if (!existsSync(examplesDir)) mkdirSync(examplesDir, { recursive: true })
   const examplePath = join(examplesDir, `${framework}-tool.ts`)
@@ -111,9 +102,10 @@ export async function runInit(framework: 'mastra' | 'vercel' | 'openai' = 'mastr
 
   console.log('')
   console.log('Next steps:')
-  console.log('  1. Add your COINBASE_CDP_API_KEY to .env.local')
-  console.log('  2. Adjust spend caps in meshpay.config.ts')
-  console.log(`  3. Use the example in meshpay-examples/${framework}-tool.ts as a starting point`)
+  console.log('  1. Generate MESHPAY_AP2_KEY:')
+  console.log('     node -e "console.log(require(\'crypto\').randomBytes(32).toString(\'hex\'))"')
+  console.log('  2. Add COINBASE_CDP_API_KEY to .env.local')
+  console.log(`  3. Open meshpay-examples/${framework}-tool.ts and wire up your handler`)
   console.log('')
-  console.log('Docs: https://meshpay.dev/docs')
+  console.log('Docs: https://github.com/vietnamesekid/meshpay#readme')
 }
