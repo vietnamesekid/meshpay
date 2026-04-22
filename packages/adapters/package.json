@@ -1,0 +1,47 @@
+{
+  "name": "@meshpay/adapters",
+  "version": "0.1.0",
+  "description": "MeshPay adapters for Vercel AI SDK, Mastra, and OpenAI Agents SDK",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./vercel": {
+      "types": "./dist/vercel/index.d.ts",
+      "import": "./dist/vercel/index.js"
+    },
+    "./mastra": {
+      "types": "./dist/mastra/index.d.ts",
+      "import": "./dist/mastra/index.js"
+    },
+    "./openai": {
+      "types": "./dist/openai/index.d.ts",
+      "import": "./dist/openai/index.js"
+    }
+  },
+  "files": ["dist"],
+  "sideEffects": false,
+  "engines": { "node": ">=20" },
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "test": "vitest",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint src/",
+    "clean": "rm -rf dist .turbo"
+  },
+  "dependencies": {
+    "@meshpay/core": "workspace:*"
+  },
+  "devDependencies": {
+    "@meshpay/tsconfig": "workspace:^"
+  },
+  "license": "MIT",
+  "publishConfig": {
+    "access": "public"
+  }
+}

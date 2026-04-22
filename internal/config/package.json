@@ -1,0 +1,29 @@
+{
+  "name": "@meshpay/internal-config",
+  "version": "0.1.0",
+  "description": "Internal shared configuration",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "test": "vitest",
+    "typecheck": "tsc --noEmit",
+    "clean": "rm -rf dist .turbo"
+  },
+  "devDependencies": {
+    "@meshpay/tsconfig": "workspace:^"
+  },
+  "license": "MIT",
+  "private": true
+}

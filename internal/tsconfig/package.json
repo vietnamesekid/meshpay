@@ -1,0 +1,13 @@
+{
+  "name": "@meshpay/tsconfig",
+  "version": "0.1.0",
+  "description": "Shared TypeScript configuration for MeshPay monorepo",
+  "files": ["base.json", "library.json"],
+  "exports": {
+    "./base.json": "./base.json",
+    "./library.json": "./library.json"
+  },
+  "devDependencies": {},
+  "license": "MIT",
+  "private": true
+}

@@ -1,0 +1,3 @@
+{
+  "extends": "@meshpay/tsconfig/base.json"
+}

@@ -1,0 +1,33 @@
+{
+  "name": "@meshpay/core",
+  "version": "0.1.0",
+  "description": "Core interfaces, types, and spend guards for MeshPay",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": ["dist"],
+  "sideEffects": false,
+  "engines": { "node": ">=20" },
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "test": "vitest",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint src/",
+    "clean": "rm -rf dist .turbo"
+  },
+  "license": "MIT",
+  "publishConfig": {
+    "access": "public"
+  },
+  "keywords": ["agent", "payments", "x402", "ai", "micropayments"],
+  "devDependencies": {
+    "@meshpay/tsconfig": "workspace:^"
+  }
+}
