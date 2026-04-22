@@ -114,7 +114,7 @@ export class SessionWallet implements AgentWallet {
   }
 
   assertCanSpend(amount: number): void {
-    if (new Date() > this.expiresAt) {
+    if (new Date() >= this.expiresAt) {
       throw new Error('Wallet session has expired')
     }
     assertUnderCap(amount, this.caps, this._state)
@@ -126,11 +126,14 @@ export class SessionWallet implements AgentWallet {
    * settlement via the CDP facilitator.
    */
   async sign(quote: Quote): Promise<Signature> {
-    if (new Date() > this.expiresAt) {
+    if (new Date() >= this.expiresAt) {
       throw new Error('Wallet session has expired — create a new SessionWallet')
     }
 
     const auth = quote.rawTx as X402Authorization
+    // Stamp the payer address so submit() can include it in the authorization payload
+    auth.from = this.address
+
     const domainParams = USDC_DOMAIN[this.chainId]
 
     if (!domainParams) {

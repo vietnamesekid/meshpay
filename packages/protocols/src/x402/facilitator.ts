@@ -39,7 +39,10 @@ export class X402Facilitator implements Facilitator {
 
   async quote(request: PaymentRequest): Promise<Quote> {
     // Probe the target URL to get the 402 Payment Required header
-    const response = await fetch(request.recipient, { method: 'GET' })
+    const response = await fetch(request.recipient, {
+      method: 'GET',
+      headers: request.extraHeaders,
+    })
 
     if (response.status !== 402) {
       throw new Error(
@@ -93,19 +96,24 @@ export class X402Facilitator implements Facilitator {
       network: quote.request.chainId,
       payload: {
         signature: signature.raw,
-        authorization: { ...rawTx, from: '' }, // wallet address filled at sign
+        // from must be the payer's address — carried through from quote.rawTx
+        authorization: rawTx,
       },
     }
 
     const paymentHeader = Buffer.from(JSON.stringify(payment)).toString('base64')
 
-    const res = await fetch(quote.request.recipient, {
-      method: 'GET',
+    // Settlement goes to the CDP facilitator, not the resource endpoint.
+    // The facilitator verifies the signature and settles on-chain, then the
+    // resource server checks the resulting X-PAYMENT-RESPONSE header.
+    const res = await fetch(this.facilitatorUrl, {
+      method: 'POST',
       headers: {
+        'Content-Type': 'application/json',
         'X-PAYMENT': paymentHeader,
-        'X-PAYMENT-FACILITATOR': this.facilitatorUrl,
         ...(this.apiKey ? { Authorization: `Bearer ${this.apiKey}` } : {}),
       },
+      body: JSON.stringify({ paymentEndpoint: quote.request.recipient }),
     })
 
     const responseHeader = res.headers.get('X-PAYMENT-RESPONSE')

@@ -49,6 +49,8 @@ export interface PaymentRequest {
   memo?: string
   /** Tool or service being paid for */
   resource?: string
+  /** Additional HTTP headers to include when probing the 402 endpoint */
+  extraHeaders?: Record<string, string>
 }
 
 export interface Quote {
