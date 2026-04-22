@@ -1,4 +1,5 @@
 import type { PaidToolOptions } from '@meshpay/core'
+import type { MeshpayClient } from '../client.js'
 import { runPaidTool } from '../paid-tool-runner.js'
 
 export interface OpenAIAgentTool<TInput = unknown, TOutput = unknown> {
@@ -12,13 +13,15 @@ export interface OpenAIAgentTool<TInput = unknown, TOutput = unknown> {
 /**
  * Creates an OpenAI Agents SDK–compatible tool with an x402 payment gate.
  *
- * Wire into your agent via the `tools` array. MeshPay intercepts the
- * `on_tool_start` lifecycle hook to handle payment before execution.
- *
  * @example
  * ```ts
+ * import { meshpay } from '@meshpay/adapters'
  * import { paidTool } from '@meshpay/adapters/openai'
  * import { Agent } from 'openai/agents'
+ *
+ * const client = meshpay()
+ *   .withWallet(createSessionWallet({ ... }))
+ *   .withFacilitator(new X402Facilitator({ ... }))
  *
  * const agent = new Agent({
  *   name: 'research-agent',
@@ -29,7 +32,7 @@ export interface OpenAIAgentTool<TInput = unknown, TOutput = unknown> {
  *       maxCostPerDay: 20.00,
  *       paymentEndpoint: 'https://api.heurist.ai/x402/research',
  *       handler: async ({ query }) => heurist.deepResearch(query),
- *     }),
+ *     }, client),
  *   ],
  * })
  * ```
@@ -39,6 +42,7 @@ export function paidTool<TInput, TOutput>(
     paymentEndpoint: string
     description?: string
   },
+  client: MeshpayClient,
 ): OpenAIAgentTool<TInput, TOutput> {
   return {
     name: opts.name,
@@ -48,7 +52,7 @@ export function paidTool<TInput, TOutput>(
       maxCostPerDay: opts.maxCostPerDay,
     },
     async execute(input: TInput) {
-      const { output } = await runPaidTool(input, opts, opts.paymentEndpoint)
+      const { output } = await runPaidTool(input, opts, opts.paymentEndpoint, client)
       return output
     },
   }

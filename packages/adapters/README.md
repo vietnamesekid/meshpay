@@ -20,24 +20,20 @@ pnpm add ai zod         # for Vercel AI SDK adapter
 
 ## Setup
 
-Before calling `paidTool`, configure a wallet and facilitator. This only needs to happen once at startup.
+Create a `MeshpayClient` once at startup and pass it to each `paidTool` call.
 
 ```typescript
+import { meshpay } from '@meshpay/adapters'
 import { createSessionWallet } from '@meshpay/wallet'
 import { X402Facilitator } from '@meshpay/protocols'
-import { setDefaultWallet, setDefaultFacilitator } from '@meshpay/adapters'
 
-setDefaultWallet(
-  createSessionWallet({
+const client = meshpay()
+  .withWallet(createSessionWallet({
     privateKey: process.env.AGENT_PRIVATE_KEY,
     chainId: 'eip155:8453',
     caps: { perCall: 0.10, perDay: 5.00 },
-  })
-)
-
-setDefaultFacilitator(
-  new X402Facilitator({ apiKey: process.env.COINBASE_CDP_API_KEY })
-)
+  }))
+  .withFacilitator(new X402Facilitator({ apiKey: process.env.COINBASE_CDP_API_KEY }))
 ```
 
 **Required env var:**
@@ -57,10 +53,15 @@ node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
 ## Vercel AI SDK
 
 ```typescript
+import { meshpay } from '@meshpay/adapters'
 import { paidTool } from '@meshpay/adapters/vercel'
 import { generateText } from 'ai'
 import { openai } from '@ai-sdk/openai'
 import { z } from 'zod'
+
+const client = meshpay()
+  .withWallet(createSessionWallet({ ... }))
+  .withFacilitator(new X402Facilitator({ ... }))
 
 const search = paidTool({
   name: 'search',
@@ -70,7 +71,7 @@ const search = paidTool({
   maxCostPerDay: 1.00,
   paymentEndpoint: 'https://api.example.com/x402/search',
   handler: async ({ query }) => fetchResults(query),
-})
+}, client)
 
 const { text } = await generateText({
   model: openai('gpt-4o-mini'),
@@ -89,7 +90,12 @@ const { text } = await generateText({
 ## Mastra
 
 ```typescript
+import { meshpay } from '@meshpay/adapters'
 import { paidTool, withPayment } from '@meshpay/adapters/mastra'
+
+const client = meshpay()
+  .withWallet(createSessionWallet({ ... }))
+  .withFacilitator(new X402Facilitator({ ... }))
 
 // Create a new paid tool from scratch
 const browse = paidTool({
@@ -99,14 +105,14 @@ const browse = paidTool({
   maxCostPerDay: 5.00,
   paymentEndpoint: 'https://api.browserbase.com/x402/session',
   handler: async (input) => browserbase.createSession(input),
-})
+}, client)
 
 // Or wrap an existing Mastra tool with a payment gate
 const paidBrowse = withPayment(existingBrowseTool, {
   paymentEndpoint: 'https://api.browserbase.com/x402/session',
   maxCostPerCall: 0.05,
   maxCostPerDay: 5.00,
-})
+}, client)
 ```
 
 ---
@@ -114,8 +120,13 @@ const paidBrowse = withPayment(existingBrowseTool, {
 ## OpenAI Agents SDK
 
 ```typescript
+import { meshpay } from '@meshpay/adapters'
 import { paidTool, createPaymentHooks } from '@meshpay/adapters/openai'
 import { Agent, Runner } from 'openai/agents'
+
+const client = meshpay()
+  .withWallet(createSessionWallet({ ... }))
+  .withFacilitator(new X402Facilitator({ ... }))
 
 const research = paidTool({
   name: 'deep_research',
@@ -124,7 +135,7 @@ const research = paidTool({
   maxCostPerDay: 20.00,
   paymentEndpoint: 'https://api.heurist.ai/x402/research',
   handler: async ({ query }) => heurist.deepResearch(query),
-})
+}, client)
 
 const agent = new Agent({
   name: 'research-agent',
@@ -163,7 +174,7 @@ If payment fails at any step, the handler is never called.
 
 ## Per-tool wallet and facilitator override
 
-Each tool can use a different wallet or facilitator:
+Each tool can use a different wallet or facilitator by passing them directly in the tool options:
 
 ```typescript
 const premiumTool = paidTool({
@@ -171,10 +182,10 @@ const premiumTool = paidTool({
   maxCostPerCall: 1.00,
   maxCostPerDay: 50.00,
   paymentEndpoint: 'https://api.example.com/x402/premium',
-  wallet: premiumWallet,           // override default
-  facilitator: customFacilitator,  // override default
+  wallet: premiumWallet,           // overrides client wallet
+  facilitator: customFacilitator,  // overrides client facilitator
   handler: async (input) => callPremiumApi(input),
-})
+}, client)
 ```
 
 ---
@@ -182,8 +193,8 @@ const premiumTool = paidTool({
 ## API
 
 ```typescript
-// Core (all adapters)
-import { setDefaultWallet, setDefaultFacilitator } from '@meshpay/adapters'
+// Client factory
+import { meshpay, MeshpayClient } from '@meshpay/adapters'
 
 // Vercel AI SDK
 import { paidTool } from '@meshpay/adapters/vercel'

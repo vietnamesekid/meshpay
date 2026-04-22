@@ -43,31 +43,31 @@ pnpm add @meshpay/core @meshpay/wallet @meshpay/protocols @meshpay/adapters
 ### Vercel AI SDK
 
 ```typescript
+import { meshpay } from '@meshpay/adapters'
+import { paidTool } from '@meshpay/adapters/vercel'
 import { createSessionWallet } from '@meshpay/wallet'
 import { X402Facilitator } from '@meshpay/protocols'
-import { setDefaultWallet, setDefaultFacilitator } from '@meshpay/adapters'
-import { paidTool } from '@meshpay/adapters/vercel'
 import { generateText } from 'ai'
 import { openai } from '@ai-sdk/openai'
 import { z } from 'zod'
 
-const wallet = createSessionWallet({
-  privateKey: process.env.AGENT_PRIVATE_KEY,
-  chainId: 'eip155:8453',          // Base
-  caps: { perCall: 0.10, perDay: 5.00 }
-})
-
-setDefaultWallet(wallet)
-setDefaultFacilitator(new X402Facilitator({ cdpApiKey: process.env.CDP_API_KEY }))
+const client = meshpay()
+  .withWallet(createSessionWallet({
+    privateKey: process.env.AGENT_PRIVATE_KEY,
+    chainId: 'eip155:8453',          // Base
+    caps: { perCall: 0.10, perDay: 5.00 },
+  }))
+  .withFacilitator(new X402Facilitator({ apiKey: process.env.CDP_API_KEY }))
 
 const search = paidTool({
   name: 'search',
   description: 'Search the web for current information',
   parameters: z.object({ query: z.string() }),
   maxCostPerCall: 0.01,
+  maxCostPerDay: 1.00,
   paymentEndpoint: 'https://api.example.com/x402/search',
   handler: async ({ query }) => fetchSearchResults(query),
-})
+}, client)
 
 const { text } = await generateText({
   model: openai('gpt-4o-mini'),
@@ -79,17 +79,23 @@ const { text } = await generateText({
 ### Mastra
 
 ```typescript
+import { meshpay } from '@meshpay/adapters'
 import { paidTool } from '@meshpay/adapters/mastra'
 
-const search = paidTool({ /* same options */ })
+const client = meshpay().withWallet(...).withFacilitator(...)
+
+const search = paidTool({ /* same options */ }, client)
 ```
 
 ### OpenAI Agents SDK
 
 ```typescript
+import { meshpay } from '@meshpay/adapters'
 import { paidTool } from '@meshpay/adapters/openai'
 
-const search = paidTool({ /* same options */ })
+const client = meshpay().withWallet(...).withFacilitator(...)
+
+const search = paidTool({ /* same options */ }, client)
 ```
 
 ---

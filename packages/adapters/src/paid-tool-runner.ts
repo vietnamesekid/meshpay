@@ -1,19 +1,13 @@
 import type {
-  AgentWallet,
-  Facilitator,
   PaidToolOptions,
   PaymentReceipt,
 } from '@meshpay/core'
 import { PaymentError, QuoteExpiredError } from '@meshpay/core'
-import { X402Facilitator } from '@meshpay/protocols'
 import {
   buildAuthorizationRequest,
   issueAuthorizationToken,
 } from '@meshpay/protocols'
-import { createSessionWallet } from '@meshpay/wallet'
-
-let _defaultFacilitator: Facilitator | undefined
-let _defaultWallet: AgentWallet | undefined
+import type { MeshpayClient } from './client.js'
 
 const AP2_SIGNING_KEY = (() => {
   const key = process.env['MESHPAY_AP2_KEY']
@@ -25,29 +19,6 @@ const AP2_SIGNING_KEY = (() => {
   }
   return key
 })()
-
-/** Override default facilitator used by all paidTool() calls */
-export function setDefaultFacilitator(f: Facilitator): void {
-  _defaultFacilitator = f
-}
-
-/** Override default wallet used by all paidTool() calls */
-export function setDefaultWallet(w: AgentWallet): void {
-  _defaultWallet = w
-}
-
-function getDefaultFacilitator(): Facilitator {
-  _defaultFacilitator ??= new X402Facilitator()
-  return _defaultFacilitator
-}
-
-function getDefaultWallet(opts: Pick<PaidToolOptions<unknown, unknown>, 'maxCostPerCall' | 'maxCostPerDay' | 'chainId'>): AgentWallet {
-  _defaultWallet ??= createSessionWallet({
-    caps: { perCall: opts.maxCostPerCall, perDay: opts.maxCostPerDay },
-    chainId: opts.chainId,
-  })
-  return _defaultWallet
-}
 
 /**
  * Core execution logic shared by all framework adapters.
@@ -67,13 +38,12 @@ export async function runPaidTool<TInput, TOutput>(
   opts: PaidToolOptions<TInput, TOutput>,
   /** HTTP endpoint to pay (passed by framework adapter) */
   paymentEndpoint: string,
+  client: MeshpayClient,
 ): Promise<{ output: TOutput; receipt: PaymentReceipt }> {
-  const wallet = opts.wallet ?? getDefaultWallet(opts)
-  const facilitator = opts.facilitator ?? getDefaultFacilitator()
+  const wallet = opts.wallet ?? client.resolveWallet(opts)
+  const facilitator = opts.facilitator ?? client.resolveFacilitator()
 
   // 1. AP2: build a signed authorization request and issue a token.
-  //    The token is sent as X-AP2-AUTHORIZATION so the resource server can
-  //    verify agent identity and delegation before settling payment.
   const ap2Request = buildAuthorizationRequest({
     agentId: wallet.address,
     privateKey: AP2_SIGNING_KEY,
@@ -115,7 +85,7 @@ export async function runPaidTool<TInput, TOutput>(
   // 3. Enforce spend cap BEFORE signing
   wallet.assertCanSpend(opts.maxCostPerCall)
 
-  // 4. Sign (EIP-3009 typed data — also stamps auth.from with wallet address)
+  // 4. Sign (EIP-3009 typed data)
   if (new Date() > quote.expiresAt) throw new QuoteExpiredError(quote)
   const signature = await wallet.sign(quote)
 

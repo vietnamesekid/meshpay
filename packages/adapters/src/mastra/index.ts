@@ -1,4 +1,5 @@
 import type { PaidToolOptions } from '@meshpay/core'
+import type { MeshpayClient } from '../client.js'
 import { runPaidTool } from '../paid-tool-runner.js'
 
 export interface MastraTool<TInput = unknown, TOutput = unknown> {
@@ -14,13 +15,20 @@ export interface MastraTool<TInput = unknown, TOutput = unknown> {
  *
  * @example
  * ```ts
+ * import { meshpay } from '@meshpay/adapters'
+ * import { paidTool } from '@meshpay/adapters/mastra'
+ *
+ * const client = meshpay()
+ *   .withWallet(createSessionWallet({ ... }))
+ *   .withFacilitator(new X402Facilitator({ ... }))
+ *
  * const browseTool = paidTool({
  *   name: 'browse',
  *   maxCostPerCall: 0.05,
  *   maxCostPerDay: 5.00,
  *   paymentEndpoint: 'https://api.browserbase.com/x402/session',
  *   handler: async (input) => browserbase.createSession(input),
- * })
+ * }, client)
  * ```
  */
 export function paidTool<TInput, TOutput>(
@@ -28,6 +36,7 @@ export function paidTool<TInput, TOutput>(
     paymentEndpoint: string
     description?: string
   },
+  client: MeshpayClient,
 ): MastraTool<TInput, TOutput> {
   return {
     name: opts.name,
@@ -37,7 +46,7 @@ export function paidTool<TInput, TOutput>(
       maxCostPerDay: opts.maxCostPerDay,
     },
     async execute(input: TInput) {
-      const { output } = await runPaidTool(input, opts, opts.paymentEndpoint)
+      const { output } = await runPaidTool(input, opts, opts.paymentEndpoint, client)
       return output
     },
   }
@@ -51,11 +60,12 @@ export function withPayment<TInput, TOutput>(
     maxCostPerCall: number
     maxCostPerDay: number
   },
+  client: MeshpayClient,
 ): MastraTool<TInput, TOutput> {
   return paidTool({
     name: tool.name,
     description: tool.description,
     handler: (input) => tool.execute(input),
     ...paymentOpts,
-  })
+  }, client)
 }

@@ -19,7 +19,8 @@ import 'dotenv/config'
 import { generateText } from 'ai'
 import { openai } from '@ai-sdk/openai'
 import { z } from 'zod'
-import { paidTool, setDefaultWallet, setDefaultFacilitator } from '@meshpay/adapters/vercel'
+import { paidTool } from '@meshpay/adapters/vercel'
+import { meshpay } from '@meshpay/adapters'
 import { createSessionWallet } from '@meshpay/wallet'
 import { AmoyFacilitator } from './amoy-facilitator.js'
 import { server as resourceServer, AMOY_PORT } from './amoy-x402-server.js'
@@ -42,8 +43,9 @@ const wallet = createSessionWallet({
 
 const facilitator = new AmoyFacilitator(PRIVATE_KEY)
 
-setDefaultWallet(wallet)
-setDefaultFacilitator(facilitator)
+const client = meshpay()
+  .withWallet(wallet)
+  .withFacilitator(facilitator)
 
 console.log('════════════════════════════════════════════════════')
 console.log('  MeshPay Paid Research Agent — Polygon Amoy')
@@ -91,7 +93,7 @@ const tools = {
       console.log(`  [handler] search — got ${data.results.length} result(s)`)
       return data
     },
-  }),
+  }, client),
 
   scrape: paidTool({
     name: 'scrape',
@@ -113,7 +115,7 @@ const tools = {
       console.log(`  [handler] scrape — got "${data.title}" (${data.wordCount} words)`)
       return data
     },
-  }),
+  }, client),
 }
 
 // ─── Run ──────────────────────────────────────────────────────────────────────

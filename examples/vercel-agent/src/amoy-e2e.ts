@@ -16,7 +16,8 @@
 
 import 'dotenv/config'
 import { createSessionWallet } from '@meshpay/wallet'
-import { paidTool, setDefaultWallet, setDefaultFacilitator } from '@meshpay/adapters/vercel'
+import { paidTool } from '@meshpay/adapters/vercel'
+import { meshpay } from '@meshpay/adapters'
 import { z } from 'zod'
 import { AmoyFacilitator, MERCHANT_ADDRESS, USDC_AMOY } from './amoy-facilitator.js'
 import { server as amoyServer, AMOY_PORT } from './amoy-x402-server.js'
@@ -43,8 +44,9 @@ const wallet = createSessionWallet({
 
 const facilitator = new AmoyFacilitator(PRIVATE_KEY)
 
-setDefaultWallet(wallet)
-setDefaultFacilitator(facilitator)
+const client = meshpay()
+  .withWallet(wallet)
+  .withFacilitator(facilitator)
 
 // ─── Balance helpers ──────────────────────────────────────────────────────────
 
@@ -99,7 +101,7 @@ const searchTool = paidTool({
     if (!res.ok) throw new Error(`Search failed: ${res.status}`)
     return res.json() as Promise<{ query: string; results: { title: string; url: string; snippet: string }[] }>
   },
-})
+}, client)
 
 // ─── Run ──────────────────────────────────────────────────────────────────────
 
